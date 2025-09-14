@@ -16,7 +16,7 @@ egrep -a "^[0-9]{1,2}\s+[0-9]{1,2}\s+[A-Z][A-Za-z]{1,}" TicDataDescr.txt | tr -d
 #egrep -a "^[0-9]\s+[0-9]{1,2}\-" TicDataDescr.txt   | cut -f2 --output-delimiter='|'
 $ egrep -a "^[0-9]\s+[0-9]{1,2}-[0-9]{1,2}\s+[a-z]{1,5}" TicDataDescr.txt | awk '{print $1 "|" $2 " " $3}' | header -a 'MGEMLEEF|MGEMLEEFCAT' > catalogo_l1.txt
 
-# L2 MOSHOOFD
+# L2 MOSHOOFD - col5
 egrep -a "^[0-9]{1,2}\s+[A-Z][a-z]{1,}" TicDataDescr.txt | awk '{print $1 "|" $2 }' | header -a 'MOSHOOFD|MOSHOOFDCAT' > catalogo_l2.txt
 
 # L3 MGODRK
@@ -62,11 +62,42 @@ awk -F"|" 'NR==FNR {map[$1]=$2; next}
 
 
 # sort los archivos por la columna de join - ordenar por la cuarta columna (MGEMLEEF)
-sort -t "|" -k4,4n ticdata2000_h.txt > ticdata2000_h_sorted.txt
-tr -d '\r' < ticdata2000_h_sorted.txt > tmp1.txt
+sort -t "|" -k4,4n joined_l0.txt > joined_l0_h_sorted.txt
+tr -d '\r' < joined_l0_h_sorted.txt > tmp1.txt
 # sort de catalogo_l1 para join - ordenar por la primera columna (MGEMLEEF)
 sort -t "|" -k1,1n catalogo_l1.txt > catalogo_l1_sorted.txt
 tr -d '\r' < catalogo_l1_sorted.txt > tmp2.txt
 
 awk -F"|" 'NR==FNR {map[$1]=$2; next} 
-{ $4 = map[$4]; OFS="|"; print }' tmp2.txt tmp1.txt > joined_l1.txt           
+{ $4 = map[$4]; OFS="|"; print }' tmp2.txt tmp1.txt > joined_l1.txt        
+
+
+# sort de joined_l1 MOSHOOFD - col5
+sort -t "|" -k5,5n joined_l1.txt > joined_l1_h_sorted.txt
+tr -d '\r' < joined_l1_h_sorted.txt > tmp1.txt
+# sort de catalogo_l2 para join - ordenar por la primera columna (MOSHOO
+sort -t "|" -k1,1n catalogo_l2.txt > catalogo_l2_sorted.txt
+tr -d '\r' < catalogo_l2_sorted.txt > tmp2.txt
+awk -F"|" 'NR==FNR {map[$1]=$2; next} 
+{ $5 = map[$5]; OFS="|"; print }' tmp2.txt tmp1.txt > joined_l2.txt
+
+# sort de joined_l2 MGODRK - para armar col6 MGODRK Roman catholic see L3
+sort -t "|" -k6,6n joined_l2.txt > joined_l2_h_sorted.txt
+tr -d '\r' < joined_l2_h_sorted.txt > tmp1.txt
+# sort de catalogo_l3 para join - ordenar por la primera columna (MGODRK
+#sort -t "|" -k1,1n catalogo_l3.txt > catalogo_l3_sorted.txt
+(head -n1 catalogo_l3.txt && tail -n +2 catalogo_l3.txt | sort -t "|" -k1,1n | tr -d '\r') > catalogo_l3_sorted.txt
+tr -d '\r' < catalogo_l3_sorted.txt > tmp2.txt
+
+awk -F"|" 'NR==FNR {map[$1]=$2; next} 
+{ $6 = map[$6]; OFS="|"; print }' tmp2.txt tmp1.txt > joined_l3.txt
+
+
+# sort de joined_l3 PWAPART - col 44
+sort -t "|" -k44,44n joined_l3.txt > joined_l3_h_sorted.txt
+tr -d '\r' < joined_l3_h_sorted.txt > tmp1.txt
+# sort de catalogo_l4 para join - ordenar por la primera columna (PWAPART
+sort -t "|" -k1,1n catalogo_l4.txt > catalogo_l4_sorted.txt
+tr -d '\r' < catalogo_l4_sorted.txt > tmp2.txt  
+awk -F"|" 'NR==FNR {map[$1]=$2; next} 
+{ $44 = map[$44]; OFS="|"; print }' tmp2.txt tmp1.txt > joined_l4.txt
