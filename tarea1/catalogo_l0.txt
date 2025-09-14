@@ -1,4 +1,3 @@
-MOSTYPE|MOSTYPECAT
 1|High Income, expensive child
 2|Very Important Provincials
 3|High status seniors

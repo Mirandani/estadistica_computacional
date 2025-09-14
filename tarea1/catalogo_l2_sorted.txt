@@ -1,0 +1,11 @@
+MOSHOOFD|MOSHOOFDCAT
+1|Successful
+2|Driven
+3|Average
+4|Career
+5|Living
+6|Cruising
+7|Retired
+8|Family
+9|Conservative
+10|Farmers
