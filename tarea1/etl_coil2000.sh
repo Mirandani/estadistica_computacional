@@ -58,3 +58,11 @@ awk -F"|" 'NR==FNR {map[$1]=$2; next} { $6 = map[$6]; OFS="|"; print }' tmp2.txt
 tr -d '\r' < joined_l3.txt > tmp1.txt
 tr -d '\r' < catalogo_l4.txt > tmp2.txt
 awk -F"|" 'NR==FNR {map[$1]=$2; next} { $43 = map[$43]; OFS="|"; print }' tmp2.txt tmp1.txt > joined_l4.txt
+
+sed $'1s/ /|/g' joined_l4.txt > joined_l4_tmp.txt && mv joined_l4_tmp.txt joined_l4.txt
+# eliminar archivos temporales
+rm tmp1.txt tmp2.txt
+#rm catalogo_l0.txt catalogo_l1.txt catalogo_l2.txt catalogo_l3.txt catalogo_l4.txt nombre_col.txt ticdata2000_h.txt joined_l0.txt joined_l1.txt joined_l2.txt joined_l3.txt
+rm catalogo_l0.txt catalogo_l1.txt catalogo_l2.txt catalogo_l3.txt catalogo_l4.txt nombre_col.txt ticdata2000_h.txt joined_l0.txt joined_l1.txt joined_l2.txt joined_l3.txt
+# archivo final
+mv joined_l4.txt coil2000_enriched.txt
