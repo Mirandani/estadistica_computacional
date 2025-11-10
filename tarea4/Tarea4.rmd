@@ -1,0 +1,257 @@
+---
+title: "Tarea 4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 8, fig.height = 5)
+```
+
+
+```{r include=FALSE}
+#install.packages("arrow")
+library(shiny)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+```
+
+########################################
+## 1. Cargar datos
+
+```{r}
+data <- read.csv("boston_housing.csv")
+head(data)
+```
+########################################
+## 2. EDA Univariado 
+########################################
+```{r}
+summary(data) 
+```
+
+# Analisis para una sola variable
+```{r}
+# Para estadísticas específicas (MEDV - Variable objetivo : Median value of owner-occupied homes in $1000's
+# Calcular medidas univariadas: mínimo, máximo, media, mediana, desviación estándar y cuartiles para cada variable.
+minimo_MEDV <- min(data$MEDV)
+maximo_MEDV <- max(data$MEDV)
+media_MEDV <- mean(data$MEDV)
+mediana_MEDV <- median(data$MEDV)
+sd_MEDV <- sd(data$MEDV)
+cuartiles_MEDV <- quantile(data$MEDV, probs = c(0.25, 0.5, 0.75))
+
+cat("\n VARIABLE: MEDV - VARIABLE OBJETIVO : (Median value of owner-occupied homes in $1000's)")
+cat("\n Mínimo:", minimo_MEDV)
+cat("\n Máximo:", maximo_MEDV)
+cat("\n Media:", media_MEDV)
+cat("\n Mediana:", mediana_MEDV)
+cat("\n Desviación Estándar:", sd_MEDV)
+cat("\n Cuartiles (25%, 50%, 75%):", cuartiles_MEDV, "\n")
+```
+
+# Tabla con columnas : [mínimo, máximo, media, mediana, desviación estándar y cuartiles] y el nombre de variables como fila
+```{r}
+
+# Construir tabla resumen para todas las variables numéricas
+summary_table <- data %>% # seleccionar data cargada
+	select(where(is.numeric)) %>% # seleccionar solo variables numéricas
+	summarize(across(everything(), list(  # 
+		minimo = ~min(.x, na.rm = TRUE), # calcular mínimo
+		maximo = ~max(.x, na.rm = TRUE),
+		media = ~mean(.x, na.rm = TRUE),
+		mediana = ~median(.x, na.rm = TRUE),
+		sd = ~sd(.x, na.rm = TRUE),
+		q25 = ~quantile(.x, probs = 0.25, na.rm = TRUE),
+		q50 = ~quantile(.x, probs = 0.5, na.rm = TRUE),
+		q75 = ~quantile(.x, probs = 0.75, na.rm = TRUE)
+	), .names = "{col}_{fn}")) %>%
+	pivot_longer(everything(), names_to = c("variable", "estadistico"), names_sep = "_(?=[^_]+$)") %>%
+	pivot_wider(names_from = estadistico, values_from = value) %>%
+	relocate(variable)
+
+print(summary_table)
+```
+
+
+
+########################################
+## 3. EDA Bivariado en R
+########################################
+
+ANALISIS PARA UNA SOLA VARIABLE
+```{r}
+## ANALISIS PARA UNA SOLA VARIABLE
+cor(data$LSTAT, data$MEDV)
+plot(data$LSTAT, data$MEDV, main="LSTAT vs MEDV", xlab="LSTAT", ylab="MEDV")
+```
+
+
+# analisis para una variable con ggplot
+```{r}
+# ANALISIS PARA UNA SOLA VARIABLE usando ggplot
+ggplot(data, aes(x = LSTAT, y = MEDV)) +
+  geom_point(color = "steelblue", alpha = 0.6) +
+  labs(
+    title = "Relación entre LSTAT y MEDV",
+    x = "LSTAT (% población con bajo estatus socioeconómico)",
+    y = "MEDV (valor medio de la vivienda en miles de dólares)"
+  ) +
+  theme_minimal()
+```
+
+## Correlaciones y relación de todas las variables contra la variable objetivo:
+Analisis para varias relacion de variables CRIM,ZN,INDUS,CHAS,NOX,RM,AGE,DIS,RAD,TAX,PTRATIO,B,LSTAT,MEDV y la variable objetivo
+```{r}
+# Generamos vector con las variables
+vars <- c("CRIM","ZN","INDUS","NOX","RM","AGE","DIS","RAD","TAX","PTRATIO","B","LSTAT")
+
+# Calcular correlaciones
+corr_df <- data %>%
+  select(all_of(vars), MEDV) %>%
+  summarise(across(all_of(vars), ~cor(.x, MEDV, use = "complete.obs"))) %>%
+  pivot_longer(cols = everything(), names_to = "variable", values_to = "correlacion")
+
+# Pivotear datos para ggplot
+data_long <- data %>%
+  pivot_longer(cols = all_of(vars),
+               names_to = "variable",
+               values_to = "valor") %>%
+  left_join(corr_df, by = "variable")
+
+#  Armar el gráfico
+ggplot(data_long, aes(x = valor, y = MEDV)) +
+  geom_point(alpha = 0.5, color = "steelblue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  facet_wrap(~ variable, scales = "free_x") +
+  geom_text(
+    data = corr_df,
+    aes(x = -Inf, y = Inf, label = paste0("r = ", round(correlacion, 2))),
+    hjust = -0.1, vjust = 1.2, size = 3, 
+    fill = "white", color = "black", size = 3,
+    inherit.aes = FALSE
+  ) +
+  labs(
+    title = "Relación entre MEDV y variables predictoras (con correlaciones)",
+    x = "Valor de la variable",
+    y = "MEDV (valor medio de la vivienda)"
+  ) +
+  theme_minimal()
+```
+
+Generar correlaciones para todas las variables:
+```{r}
+cor_matrix <- cor(data)
+cor_matrix["MEDV",]  # Ver correlación de MEDV con demás variables
+```
+
+########################################
+## 4. Visualizaciones en R
+########################################
+
+## Histogramas
+
+```{r}
+# Histograma de la variable objetivo MEDV
+hist(data$MEDV, main="Histograma de MEDV", xlab="MEDV", col="lightblue", border="black",breaks = 25,)
+
+# Histograma de todas las variables numéricas
+numeric_vars <- data %>% select(where(is.numeric)) %>% names()
+par(mfrow=c(5,3), mar = c(2, 2, 2, 1))  # Ajustar la disposicion de los gráficos
+for (var in numeric_vars) {
+  hist(data[[var]],
+       main = paste("Histograma", var),
+       xlab = var,
+       col = "lightblue",
+       breaks = 25,
+       border = "black")
+}
+par(mfrow=c(1,1))  # Restablecer disposición de gráficos
+
+```
+## Scatter Plots 
+
+```{r}
+pairs(data[,c("MEDV","CRIM","ZN","INDUS","NOX")],
+       col = "lightblue",mar = c(2, 2, 2, 1))  # Scatterplot matrix
+pairs(data[, c("MEDV","RM","AGE","MEDV","DIS","RAD")],
+       col = "lightblue",mar = c(2, 2, 2, 1))
+pairs(data[, c("MEDV","TAX","PTRATIO","B","LSTAT")],
+       col = "lightblue",mar = c(2, 2, 2, 1))
+```
+
+## Boxplots:
+```{r}
+# Boxplot de variable objetivo MEDV
+boxplot(data$MEDV, main="Boxplot de MEDV", ylab="MEDV", col="lightgreen",horizontal = TRUE)
+
+# Boxplots de todas las variables numéricas
+par(mfrow=c(5,3), mar = c(3, 3, 2, 1))  # Ajustar la disposición de los gráficos
+
+
+for (var in numeric_vars) {
+  boxplot(
+    data[[var]], 
+    main=paste("Boxplot de", var), 
+    ylab=var, 
+    col="yellow",
+          horizontal = TRUE)
+}
+par(mfrow=c(1,1))  # Restablecer disposición de gráficos    
+
+
+```
+
+########################################
+## 5. Guardar en Formato Feather
+########################################
+
+Instalar el paquete arrow en R y guardar el dataset:
+```{r}
+#install.packages("arrow")  # Instalar paquete arrow si no está instalado
+library(arrow)
+# Guardar el dataset en formato Feather
+write_feather(data, "boston_housing.feather")
+
+```
+
+########################################
+## 6. Shiny App en R
+########################################
+Breve Shiny integrado en este R Markdown (runtime: shiny): controles para elegir variables numéricas y tabla reactiva.
+
+```{r, echo=FALSE}
+# Asegurarse de tener shiny instalado
+if (!requireNamespace("shiny", quietly = TRUE)) install.packages("shiny")
+library(shiny)
+ui <- fluidPage(
+  titlePanel("Boston Housing Analysis"),
+  sidebarLayout(
+    sidebarPanel(
+         # Controles de entrada
+      sliderInput("num", "Elige un número:", min = 1, max = 100, value = 50)
+    ),
+    mainPanel( # Gráficos y hallazgos
+      textOutput("result")
+    )
+  )
+)
+
+server <- function(input, output) {
+    data <- read_feather("boston_clean.feather")
+
+    output$distPlot <- renderPlot({
+    hist(data$MEDV, main="Distribución MEDV", xlab="MEDV")
+  })
+
+    output$result <- renderText({
+        paste("Has seleccionado el número:", input$num)
+  })
+
+  shinyApp(ui = ui, server = server)
+}
+```
+
+
+
+
