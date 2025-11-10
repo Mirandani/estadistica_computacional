@@ -41,7 +41,7 @@ mediana_MEDV <- median(data$MEDV)
 sd_MEDV <- sd(data$MEDV)
 cuartiles_MEDV <- quantile(data$MEDV, probs = c(0.25, 0.5, 0.75))
 
-cat("\n VARIABLE: MEDV - VARIABLE OBJETIVO : (Median value of owner-occupied homes in $1000's)")
+cat("\n VARIABLE: MEDV - VARIABLE OBJETIVO")
 cat("\n Mínimo:", minimo_MEDV)
 cat("\n Máximo:", maximo_MEDV)
 cat("\n Media:", media_MEDV)

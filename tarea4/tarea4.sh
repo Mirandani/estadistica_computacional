@@ -17,6 +17,6 @@ cat boston_housing_raw.txt | tr -s ' ' | sed 's/^ //;s/ $//' | tr ' ' ',' > bost
 cat boston_housing_header.csv boston_housing_data.csv > boston_housing.csv
 
 # Limpiar archivos temporales
-#rm boston_housing_raw.txt boston_housing_names.txt boston_housing_header.csv
+rm boston_housing_raw.txt boston_housing_names.txt boston_housing_header.csv
 
 
